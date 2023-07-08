@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Top-Down Driving Game</title>
+    <style>
+      body {
+        background-color: gray;
+        margin: 0;
+        overflow: hidden;
+      }
+      canvas {
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+      // Game initialization
+      var canvas = document.getElementById("gameCanvas");
+      var context = canvas.getContext("2d");
+
+      // Set canvas dimensions to fill the screen
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // Road properties
+      var road = {
+        width: 80,
+        color: "yellow"
+      };
+
+      // Car properties
+      var playerCar = {
+        x: canvas.width / 2,
+        y: canvas.height - 100,
+        width: 80,
+        height: 40,
+        color: "blue",
+        wheelRadius: 10,
+        speed: 5
+      };
+
+      // Array to store cars
+      var cars = [];
+
+      // Keyboard input handling
+      var keysDown = {};
+
+      window.addEventListener("keydown", function(event) {
+        keysDown[event.keyCode] = true;
+      });
+
+      window.addEventListener("keyup", function(event) {
+        delete keysDown[event.keyCode];
+      });
+
+      // Function to create a car object
+      function createCar() {
+        var carObj = {
+          x: Math.random() * (canvas.width - playerCar.width),
+          y: -playerCar.height,
+          speed: Math.random() * 2 + 1,
+          color: getRandomColor()
+        };
+        cars.push(carObj);
+      }
+
+      // Function to generate a random color
+      function getRandomColor() {
+        var letters = "0123456789ABCDEF";
+        var color = "#";
+        for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+
+      // Game update function
+      function update() {
+        if (Math.random() < 0.02) {
+          // Randomly create new cars
+          createCar();
+        }
+
+        if (38 in keysDown) {
+          // Up arrow key
+          playerCar.y -= playerCar.speed;
+        }
+        if (40 in keysDown) {
+          // Down arrow key
+          playerCar.y += playerCar.speed;
+        }
+        if (37 in keysDown) {
+          // Left arrow key
+          playerCar.x -= playerCar.speed;
+        }
+        if (39 in keysDown) {
+          // Right arrow key
+          playerCar.x += playerCar.speed;
+        }
+
+        // Clear the canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw the road
+        context.fillStyle = road.color;
+        for (var y = 0; y < canvas.height; y += road.width * 2) {
+          context.fillRect(canvas.width / 2 - road.width / 2, y, road.width, road.width);
+        }
+
+        // Draw the player's car
+        context.fillStyle = playerCar.color;
+        context.fillRect(playerCar.x, playerCar.y, playerCar.width, playerCar.height);
+
+        // Draw the wheels
+        context.fillStyle = "black";
+        context.beginPath();
+        context.arc(playerCar.x + playerCar.width / 4, playerCar.y + playerCar.height, playerCar.wheelRadius, 0, Math.PI * 2, false);
+        context.fill();
+        context.beginPath();
+        context.arc(playerCar.x + playerCar.width / 4 * 3, playerCar.y + playerCar.height, playerCar.wheelRadius, 0, Math.PI * 2, false);
+        context.fill();
+
+        // Update and draw the moving cars
+        for (var i = 0; i < cars.length; i++) {
+          var currentCar = cars[i];
+          currentCar.y += currentCar.speed;
+
+          context.fillStyle = currentCar.color;
+          context.fillRect(currentCar.x, currentCar.y, playerCar.width, playerCar.height);
+        }
+
+        // Remove cars that move off the screen
+        cars = cars.filter(function(currentCar) {
+          return currentCar.y <= canvas.height;
+        });
+
+        // Call update function repeatedly
+        requestAnimationFrame(update);
+      }
+
+      // Start the game
+      update();
+    </script>
+  </body>
+</html>

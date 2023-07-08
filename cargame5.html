@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Top-Down Driving Game</title>
+    <style>
+      body {
+        background-color: gray;
+        margin: 0;
+        overflow: hidden;
+      }
+      canvas {
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+      // Game initialization
+      var canvas = document.getElementById("gameCanvas");
+      var context = canvas.getContext("2d");
+
+      // Set canvas dimensions to fill the screen
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // Road properties
+      var road = {
+        width: 80,
+        color: "yellow"
+      };
+
+      // Car properties
+      var car = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        width: 80,
+        height: 40,
+        color: "red",
+        wheelRadius: 10,
+        speed: 5
+      };
+
+      // Keyboard input handling
+      var keysDown = {};
+
+      window.addEventListener("keydown", function(event) {
+        keysDown[event.keyCode] = true;
+      });
+
+      window.addEventListener("keyup", function(event) {
+        delete keysDown[event.keyCode];
+      });
+
+      // Game update function
+      function update() {
+        if (38 in keysDown) {
+          // Up arrow key
+          car.y -= car.speed;
+        }
+        if (40 in keysDown) {
+          // Down arrow key
+          car.y += car.speed;
+        }
+        if (37 in keysDown) {
+          // Left arrow key
+          car.x -= car.speed;
+        }
+        if (39 in keysDown) {
+          // Right arrow key
+          car.x += car.speed;
+        }
+
+        // Clear the canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw the road
+        context.fillStyle = road.color;
+        for (var y = 0; y < canvas.height; y += road.width * 2) {
+          context.fillRect(canvas.width / 2 - road.width / 2, y, road.width, road.width);
+        }
+
+        // Draw the car
+        context.fillStyle = car.color;
+        
+        // Draw car body
+        context.fillRect(car.x - car.width / 2, car.y - car.height / 2, car.width, car.height);
+        
+        // Draw car wheels
+        context.fillStyle = "black";
+        context.beginPath();
+        context.arc(car.x - car.width / 4, car.y + car.height / 2 - car.wheelRadius, car.wheelRadius, 0, Math.PI * 2, false);
+        context.fill();
+        context.beginPath();
+        context.arc(car.x + car.width / 4, car.y + car.height / 2 - car.wheelRadius, car.wheelRadius, 0, Math.PI * 2, false);
+        context.fill();
+
+        // Call update function repeatedly
+        requestAnimationFrame(update);
+      }
+
+      // Start the game
+      update();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Top-Down Driving Game</title>
+    <style>
+      body {
+        background-color: gray;
+        margin: 0;
+        overflow: hidden;
+      }
+      canvas {
+        border: 1px solid black;
+      }
+      #gameOverText {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 36px;
+        font-weight: bold;
+        color: red;
+        display: none;
+      }
+      #playAgainButton {
+        position: absolute;
+        top: 60%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        padding: 10px 20px;
+        background-color: green;
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="timer" style="position: absolute; top: 10px; left: 10px; font-size: 24px;"></div>
+    <div id="gameOverText">Game Over</div>
+    <button id="playAgainButton">Play Again</button>
+
+    <script>
+      // Game initialization
+      var canvas = document.getElementById("gameCanvas");
+      var context = canvas.getContext("2d");
+
+      // Set canvas dimensions to fill the screen
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // Road properties
+      var road = {
+        width: 80,
+        color: "yellow"
+      };
+
+      // Car properties
+      var playerCar = {
+        x: canvas.width / 2,
+        y: canvas.height - 100,
+        width: 80,
+        height: 40,
+        color: "blue",
+        wheelRadius: 10,
+        speed: 5
+      };
+
+      // Array to store cars
+      var cars = [];
+
+      // Keyboard input handling
+      var keysDown = {};
+
+      // Game state variables
+      var gameRunning = true;
+      var gameOver = false;
+
+      window.addEventListener("keydown", function(event) {
+        keysDown[event.keyCode] = true;
+      });
+
+      window.addEventListener("keyup", function(event) {
+        delete keysDown[event.keyCode];
+      });
+
+      // Function to create a car object
+      function createCar() {
+        var carObj = {
+          x: Math.random() * (canvas.width - playerCar.width),
+          y: -playerCar.height,
+          speed: Math.random() * 2 + 1,
+          color: getRandomColor()
+        };
+        cars.push(carObj);
+      }
+
+      // Function to generate a random color
+      function getRandomColor() {
+        var letters = "0123456789ABCDEF";
+        var color = "#";
+        for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+
+      // Timer variables
+      var startTime = Date.now();
+
+      // Function to update the timer
+      function updateTimer() {
+        if (!gameOver) {
+          var currentTime = Date.now();
+          var timeElapsed = currentTime - startTime;
+
+          // Calculate minutes, seconds, and milliseconds
+          var minutes = Math.floor((timeElapsed % (1000 * 60 * 60)) / (1000 * 60));
+          var seconds = Math.floor((timeElapsed % (1000 * 60)) / 1000);
+          var milliseconds = Math.floor(timeElapsed % 1000);
+
+          // Format the time
+          var formattedTime = String(minutes).padStart(2, '0') + ":" + String(seconds).padStart(2, '0') + "." + String(milliseconds).padStart(3, '0');
+
+          // Update the timer element
+          document.getElementById("timer").textContent = "Time: " + formattedTime;
+        }
+
+        // Call updateTimer function repeatedly
+        requestAnimationFrame(updateTimer);
+      }
+
+      // Function to check collision between two rectangles
+      function checkCollision(rect1, rect2) {
+        return (
+          rect1.x < rect2.x + rect2.width &&
+          rect1.x + rect1.width > rect2.x &&
+          rect1.y < rect2.y + rect2.height &&
+          rect1.y + rect1.height > rect2.y
+        );
+      }
+
+      // Function to handle game over state
+      function gameOverState() {
+        gameRunning = false;
+        gameOver = true;
+        document.getElementById("gameOverText").style.display = "block";
+        document.getElementById("playAgainButton").style.display = "block";
+      }
+
+      // Function to reset the game
+      function resetGame() {
+        gameRunning = true;
+        gameOver = false;
+        cars = [];
+        playerCar.x = canvas.width / 2;
+        playerCar.y = canvas.height - 100;
+        startTime = Date.now();
+        document.getElementById("gameOverText").style.display = "none";
+        document.getElementById("playAgainButton").style.display = "none";
+        update();
+      }
+
+      // Game update function
+      function update() {
+        if (Math.random() < 0.02 && gameRunning) {
+          // Randomly create new cars
+          createCar();
+        }
+
+        if (38 in keysDown) {
+          // Up arrow key
+          playerCar.y -= playerCar.speed;
+        }
+        if (40 in keysDown) {
+          // Down arrow key
+          playerCar.y += playerCar.speed;
+        }
+        if (37 in keysDown) {
+          // Left arrow key
+          playerCar.x -= playerCar.speed;
+        }
+        if (39 in keysDown) {
+          // Right arrow key
+          playerCar.x += playerCar.speed;
+        }
+
+        // Clear the canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw the road
+        context.fillStyle = road.color;
+        for (var y = 0; y < canvas.height; y += road.width * 2) {
+          context.fillRect(canvas.width / 2 - road.width / 2, y, road.width, road.width);
+        }
+
+        // Draw the player's car
+        context.fillStyle = playerCar.color;
+        context.fillRect(playerCar.x, playerCar.y, playerCar.width, playerCar.height);
+
+        // Draw the wheels
+        context.fillStyle = "black";
+        context.beginPath();
+        context.arc(playerCar.x + playerCar.width / 4, playerCar.y + playerCar.height, playerCar.wheelRadius, 0, Math.PI * 2, false);
+        context.fill();
+        context.beginPath();
+        context.arc(playerCar.x + playerCar.width / 4 * 3, playerCar.y + playerCar.height, playerCar.wheelRadius, 0, Math.PI * 2, false);
+        context.fill();
+
+        // Update and draw the moving cars
+        for (var i = 0; i < cars.length; i++) {
+          var currentCar = cars[i];
+          currentCar.y += currentCar.speed;
+
+          context.fillStyle = currentCar.color;
+          context.fillRect(currentCar.x, currentCar.y, playerCar.width, playerCar.height);
+
+          // Check collision with player's car
+          var playerRect = {
+            x: playerCar.x,
+            y: playerCar.y,
+            width: playerCar.width,
+            height: playerCar.height
+          };
+          var currentCarRect = {
+            x: currentCar.x,
+            y: currentCar.y,
+            width: playerCar.width,
+            height: playerCar.height
+          };
+
+          if (checkCollision(playerRect, currentCarRect)) {
+            gameOverState();
+            break;
+          }
+        }
+
+        // Remove cars that move off the screen
+        cars = cars.filter(function(currentCar) {
+          return currentCar.y <= canvas.height;
+        });
+
+        // Call update function repeatedly
+        if (gameRunning) {
+          requestAnimationFrame(update);
+        }
+      }
+
+      // Start the timer
+      updateTimer();
+
+      // Add event listener to the "Play Again" button
+      document.getElementById("playAgainButton").addEventListener("click", resetGame);
+
+      // Start the game
+      update();
+    </script>
+  </body>
+</html>
